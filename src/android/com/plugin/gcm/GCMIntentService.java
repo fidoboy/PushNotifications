@@ -21,23 +21,19 @@ import android.util.Log;
 
 @SuppressLint("NewApi")
 public class GCMIntentService extends GCMBaseIntentService {
-
 	public static final int NOTIFICATION_ID = 237;
+	private static String TAG = "PushPlugin-GCMIntentService";
+	public static final String MESSAGE = "message";
+	public static final String COLDSTART = "coldstart";
 
-    private static String TAG = "PushPlugin-GCMIntentService";
-
-    public static final String MESSAGE = "message";
-
-    public static final String COLDSTART = "coldstart";
-    
-    public GCMIntentService() {
+	public GCMIntentService() {
 		super("GCMIntentService");
 	}
 
 	@Override
 	public void onRegistered(Context context, String regId) {
 		Log.v(TAG, "onRegistered: "+ regId);
-        NotificationService.getInstance(context).onRegistered(regId);
+        	NotificationService.getInstance(context).onRegistered(regId);
 	}
 
 	@Override
@@ -60,6 +56,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	            
 			NotificationService.getInstance(context).onMessage(extras);
 			if (!isPushPluginForeground) {
+				Log.d(TAG, "onMessage - isPushPluginForeground: " + isPushPluginForeground);
 	                	if (extras.getString(MESSAGE) != null && extras.getString(MESSAGE).length() != 0) {
 					createNotification(context, extras);
 				}

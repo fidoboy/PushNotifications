@@ -29,7 +29,7 @@ public class GCMIntentService extends GCMBaseIntentService {
     public static final String MESSAGE = "message";
 
     public static final String COLDSTART = "coldstart";
-
+    
     public GCMIntentService() {
 		super("GCMIntentService");
 	}
@@ -48,19 +48,21 @@ public class GCMIntentService extends GCMBaseIntentService {
 	@Override
 	protected void onMessage(Context context, Intent intent) {
 		boolean isPushPluginActive = NotificationService.getInstance(context).isActive();
+		boolean isPushPluginForeground = NotificationService.getInstance(context).isForeground();
 
-        Log.d(TAG, "onMessage - isPushPluginActive: " + isPushPluginActive);
+		Log.d(TAG, "onMessage - isPushPluginActive: " + isPushPluginActive);
 
 		Bundle extras = intent.getExtras();
 		if (extras != null) {
-
-            if (!isPushPluginActive) {
-                extras.putBoolean(COLDSTART, true);
-            }
-            NotificationService.getInstance(context).onMessage(extras);
-
-			if (extras.getString(MESSAGE) != null && extras.getString(MESSAGE).length() != 0) {
-				createNotification(context, extras);
+			if (!isPushPluginActive) {
+				extras.putBoolean(COLDSTART, true);
+			}
+	            
+			NotificationService.getInstance(context).onMessage(extras);
+			if (!isPushPluginForeground) {
+	                	if (extras.getString(MESSAGE) != null && extras.getString(MESSAGE).length() != 0) {
+					createNotification(context, extras);
+				}
 			}
 		}
 	}

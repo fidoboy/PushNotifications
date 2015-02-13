@@ -87,6 +87,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Bitmap myBitmap = null;
 		String customIconUrl = null;
 		customIconUrl = extras.getString("icon");
+		Log.d(TAG, "createNotification - icon: " + customIconUrl);
 		if (customIconUrl != null) {
 			try {
 				URL url = new URL(customIconUrl);

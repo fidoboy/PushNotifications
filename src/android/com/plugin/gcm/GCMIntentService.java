@@ -86,18 +86,19 @@ public class GCMIntentService extends GCMBaseIntentService {
 		}
 		
 		Bitmap myBitmap = null;
-		String customIconUrl= null;
-		customIconUrl=extras.getString("icon");
-		
-		try {
-			URL url = new URL(customIconUrl);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setDoInput(true);
-			connection.connect();
-			InputStream input = connection.getInputStream();
-			myBitmap = BitmapFactory.decodeStream(input);
-		} catch (IOException e) {
-			e.printStackTrace();
+		String customIconUrl = null;
+		customIconUrl = extras.getString("icon");
+		if (customIconUrl != null) {
+			try {
+				URL url = new URL(customIconUrl);
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setDoInput(true);
+				connection.connect();
+				InputStream input = connection.getInputStream();
+				myBitmap = BitmapFactory.decodeStream(input);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
 		}
 		
 		NotificationCompat.Builder mBuilder =

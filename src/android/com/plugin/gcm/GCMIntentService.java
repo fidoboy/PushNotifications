@@ -2,12 +2,19 @@ package com.plugin.gcm;
 
 import com.google.android.gcm.GCMBaseIntentService;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -78,15 +85,26 @@ public class GCMIntentService extends GCMBaseIntentService {
 			catch (NumberFormatException e) {}
 		}
 		
-		String mIcon = context.getApplicationInfo().icon;
-		if (extras.getString("icon") != null) {
-			mIcon = extras.getString("icon");
+		Bitmap myBitmap = null;
+		String customIconUrl= null;
+		customIconUrl=extras.getString("icon");
+		
+		try {
+			URL url = new URL(customIconUrl);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setDoInput(true);
+			connection.connect();
+			InputStream input = connection.getInputStream();
+			myBitmap = BitmapFactory.decodeStream(input);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		NotificationCompat.Builder mBuilder =
 			new NotificationCompat.Builder(context)
 				.setDefaults(defaults)
-				.setSmallIcon(mIcon)
+				.setSmallIcon(context.getApplicationInfo().icon)
+				.setLargeIcon(myBitmap)
 				.setWhen(System.currentTimeMillis())
 				.setContentTitle(extras.getString("title"))
 				.setTicker(extras.getString("title"))

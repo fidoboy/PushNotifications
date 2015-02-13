@@ -77,12 +77,16 @@ public class GCMIntentService extends GCMBaseIntentService {
 			}
 			catch (NumberFormatException e) {}
 		}
-
-
+		
+		String mIcon = context.getApplicationInfo().icon;
+		if (extras.getString("icon") != null) {
+			mIcon = extras.getString("icon");
+		}
+		
 		NotificationCompat.Builder mBuilder =
 			new NotificationCompat.Builder(context)
 				.setDefaults(defaults)
-				.setSmallIcon(context.getApplicationInfo().icon)
+				.setSmallIcon(mIcon)
 				.setWhen(System.currentTimeMillis())
 				.setContentTitle(extras.getString("title"))
 				.setTicker(extras.getString("title"))

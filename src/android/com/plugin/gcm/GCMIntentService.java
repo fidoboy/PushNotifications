@@ -46,18 +46,17 @@ public class GCMIntentService extends GCMBaseIntentService {
 		boolean isPushPluginActive = NotificationService.getInstance(context).isActive();
 		boolean isPushPluginForeground = NotificationService.getInstance(context).isForeground();
 
-		Log.d(TAG, "onMessage - isPushPluginActive: " + isPushPluginActive);
-
 		Bundle extras = intent.getExtras();
 		if (extras != null) {
+			Log.d(TAG, "onMessage - isPushPluginActive: " + isPushPluginActive);
+			Log.d(TAG, "onMessage - isPushPluginForeground: " + isPushPluginForeground);
 			if (!isPushPluginActive) {
 				extras.putBoolean(COLDSTART, true);
 			}
 	            
 			NotificationService.getInstance(context).onMessage(extras);
 			if (!isPushPluginForeground) {
-				Log.d(TAG, "onMessage - isPushPluginForeground: " + isPushPluginForeground);
-	                	if (extras.getString(MESSAGE) != null && extras.getString(MESSAGE).length() != 0) {
+				if (extras.getString(MESSAGE) != null && extras.getString(MESSAGE).length() != 0) {
 					createNotification(context, extras);
 				}
 			}

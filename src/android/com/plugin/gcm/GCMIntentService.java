@@ -32,8 +32,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	@Override
 	public void onRegistered(Context context, String regId) {
-		Log.v(TAG, "onRegistered: "+ regId);
-        	NotificationService.getInstance(context).onRegistered(regId);
+		NotificationService.getInstance(context).onRegistered(regId);
 	}
 
 	@Override
@@ -48,8 +47,6 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 		Bundle extras = intent.getExtras();
 		if (extras != null) {
-			Log.d(TAG, "onMessage - isPushPluginActive: " + isPushPluginActive);
-			Log.d(TAG, "onMessage - isPushPluginForeground: " + isPushPluginForeground);
 			if (!isPushPluginActive) {
 				extras.putBoolean(COLDSTART, true);
 			}
@@ -86,7 +83,6 @@ public class GCMIntentService extends GCMBaseIntentService {
 		Bitmap myBitmap = null;
 		String customIconUrl = null;
 		customIconUrl = extras.getString("icon");
-		Log.d(TAG, "createNotification - icon: " + customIconUrl);
 		if (customIconUrl != null) {
 			try {
 				URL url = new URL(customIconUrl);

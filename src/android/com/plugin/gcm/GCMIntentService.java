@@ -24,8 +24,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	public static final int NOTIFICATION_ID = 237;
 	private static String TAG = "PushPlugin-GCMIntentService";
 	public static final String MESSAGE = "message";
-	public static final String COLDSTART = "coldstart";
-
+	
 	public GCMIntentService() {
 		super("GCMIntentService");
 	}
@@ -42,21 +41,16 @@ public class GCMIntentService extends GCMBaseIntentService {
 
 	@Override
 	protected void onMessage(Context context, Intent intent) {
-		boolean isPushPluginActive = NotificationService.getInstance(context).isActive();
 		boolean isPushPluginForeground = NotificationService.getInstance(context).isForeground();
 
 		Bundle extras = intent.getExtras();
 		if (extras != null) {
-			if (!isPushPluginActive) {
-				extras.putBoolean(COLDSTART, true);
-			}
-	            
-			NotificationService.getInstance(context).onMessage(extras);
 			if (!isPushPluginForeground) {
 				if (extras.getString(MESSAGE) != null && extras.getString(MESSAGE).length() != 0) {
 					createNotification(context, extras);
 				}
 			}
+			NotificationService.getInstance(context).onMessage(extras);
 		}
 	}
 
@@ -66,7 +60,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 		String appName = getAppName(this);
 
 		Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
-		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		notificationIntent.putExtra("pushBundle", extras);
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);

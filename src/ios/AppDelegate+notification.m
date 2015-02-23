@@ -80,9 +80,11 @@ static char launchNotificationKey;
         appState = application.applicationState;
     }
 
-    //NSMutableDictionary* notification = [NSMutableDictionary dictionaryWithDictionary:[userInfo objectForKey:@"aps"]];
-    NSMutableDictionary* notification = [NSMutableDictionary dictionaryWithDictionary:[userInfo mutableCopy]];
+    NSMutableDictionary* notification = [NSMutableDictionary dictionaryWithDictionary:[userInfo objectForKey:@"aps"]];
+    NSMutableDictionary* payload = [NSMutableDictionary dictionaryWithDictionary:[userInfo mutableCopy]];
+    [payload removeObject: @"aps"];
 
+    [notification setObject: payload forKey:@"custom"];
     [notification setObject:[self getUUID] forKey:@"uuid"];
     [notification setObject:[self getCurrentDate] forKey:@"timestamp"];
 

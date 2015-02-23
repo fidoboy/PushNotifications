@@ -1,8 +1,10 @@
 package com.plugin.gcm;
 
 import android.app.NotificationManager;
+
 import com.google.android.gcm.GCMRegistrar;
 
+import com.appgyver.cordova.AGCordovaApplicationInterface;
 import com.appgyver.event.EventService;
 
 import org.apache.cordova.CallbackContext;
@@ -19,18 +21,21 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
+import java.util.TimeZone;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 
 /**
- * Notification Service - Handles Push Notification and deliver the messages to all web views
- * that have registered callbacks.
+ * Notification Service - Handles Push Notification and deliver the messages to all web views that
+ * have registered callbacks.
  */
 public class NotificationService {
 
     public static final String USER_ACTION = "userAction";
 
     private static String TAG = "PushPlugin-NotificationService";
-
-    public static final String REG_ID = "regID";
 
     public static final String FOREGROUND = "foreground";
 
@@ -52,9 +57,11 @@ public class NotificationService {
 
     public static final String PAYLOAD = "payload";
 
-    private static NotificationService sInstance;
+    public static final String TIMESTAMP = "timestamp";
 
-    private boolean mIsActive = false;
+    public static final String KEY_UUID = "uuid";
+
+    private static NotificationService sInstance;
 
     private final Context mContext;
 
@@ -70,27 +77,11 @@ public class NotificationService {
 
     public NotificationService(Context context) {
         mContext = context;
-
-        EventService.getInstance().addEventListener(EventService.STEROIDS_APPLICATION_STARTED,
-                new EventService.EventHandler() {
-                    @Override
-                    public void call(Object eventContext) {
-                        mIsActive = true;
-                    }
-                });
-
-        EventService.getInstance().addEventListener(EventService.STEROIDS_APPLICATION_ENDED,
-                new EventService.EventHandler() {
-                    @Override
-                    public void call(Object eventContext) {
-                        cleanUp();
-                        mIsActive = false;
-                    }
-                });
     }
 
-    public boolean isActive() {
-        return mIsActive;
+    public boolean isApplicationRunning() {
+        return ((AGCordovaApplicationInterface) mContext.getApplicationContext()).getCurrentActivity()
+                != null;
     }
 
     public static NotificationService getInstance(Context context) {
@@ -197,91 +188,16 @@ public class NotificationService {
     }
 
     public void onMessage(Bundle extras) {
-        onMessage(extras, false);
-    }
-
-    /**
-     * Deliver a notification message..
-     * @param extras
-     * @param userAction -    When this flag is true we try to remove a duplicate notification.
-     *                        This only happens when the IntentService delivers the notification
-     *                        and the PushHandlerActivity also delivers the same notification
-     *                        because the user tapped in the notification.
-     *
-     */
-    public void onMessage(Bundle extras, boolean userAction) {
         JSONObject notification = createNotificationJSON(extras);
 
-        if(userAction) {
-            tryToRemoveDuplicate(notification);
-
-            try {
-                notification.put(USER_ACTION, true);
-            } catch (JSONException e) {
-                /*no op*/
-            }
-        }
-
-        Log.v(TAG, "onMessage() -> isForeground: " + isForeground() + " notification: "
+        Log.v(TAG, "onMessage() -> isForeground: " + isForeground() + " isApplicationRunning "
+                + isApplicationRunning() + " notification: "
                 + notification);
 
         addNotification(notification);
 
         notifyAllWebViews();
     }
-
-    private void tryToRemoveDuplicate(JSONObject notification) {
-        int idx = 0;
-        boolean found = false;
-        for(idx = 0; idx < mNotifications.size(); idx++){
-            JSONObject item = mNotifications.get(idx);
-            if(isEqual(notification, item)){
-                found = true;
-                break;
-            }
-        }
-        if(found){
-            Log.v(TAG, "tryToRemoveDuplicate() Duplicate found.. and removed.");
-            mNotifications.remove(idx);
-        }
-    }
-
-    private boolean isEqual(JSONObject from, JSONObject to) {
-        boolean isEqual = false;
-
-        if(from != null && to != null &&
-                from.length() == to.length()){
-
-            try {
-                Iterator<String> keys = from.keys();
-                isEqual = true;
-                while (keys.hasNext() && isEqual) {
-                    String key = keys.next();
-
-                    if(from.get(key) == null && to.get(key) == null){
-                        continue;
-                    }
-
-                    if(from.get(key) instanceof JSONObject){
-                        isEqual = isEqual((JSONObject)from.get(key), (JSONObject)to.get(key));
-                    }
-                    else{
-                        isEqual =  from.get(key).equals(to.get(key));
-                    }
-                }
-            }
-            catch(Exception exp){
-                /*no op*/
-            }
-        }
-        else{
-            isEqual = false;
-        }
-
-        return isEqual;
-    }
-
-
 
     private void notifyAllWebViews() {
         for (WebViewReference webViewReference : mWebViewReferences) {
@@ -290,7 +206,8 @@ public class NotificationService {
     }
 
     private void flushNotificationToWebView(WebViewReference webViewReference) {
-        Log.v(TAG, "flushNotificationToWebView() - Notifications.size(): " + mNotifications.size() + " -> webViewReference: " + webViewReference);
+        Log.v(TAG, "flushNotificationToWebView() - Notifications.size(): " + mNotifications.size()
+                + " -> webViewReference: " + webViewReference);
 
         for (JSONObject notification : mNotifications) {
             webViewReference.sendNotification(notification);
@@ -324,12 +241,34 @@ public class NotificationService {
 
             notification.put(FOREGROUND, isForeground());
 
+            notification.put(COLDSTART, !isApplicationRunning());
+
+            notification.put(TIMESTAMP, getTimeStamp());
+
+            notification.put(KEY_UUID, generateUUID());
+
             return notification;
 
         } catch (JSONException e) {
             Log.e(TAG, "extrasToJSON: JSON exception");
         }
         return null;
+    }
+
+    private String generateUUID() {
+        UUID uuid = UUID.randomUUID();
+
+        return uuid.toString();
+    }
+
+    private String getTimeStamp() {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+
+        df.setTimeZone(tz);
+        String timeAsISO = df.format(new Date());
+
+        return timeAsISO;
     }
 
     // Try to figure out if the value is another JSON object or JSON Array
@@ -355,7 +294,7 @@ public class NotificationService {
                     jsondata.put(key, strValue);
                 }
             } else {
-                if(!json.has(key)) {
+                if (!json.has(key)) {
                     jsondata.put(key, strValue);
                 }
             }
@@ -387,15 +326,14 @@ public class NotificationService {
     }
 
     public void setForeground(boolean foreground) {
-        if(mForeground != foreground){
-          Log.v(TAG, "setForeground() -> oldValue: " + mForeground + " newValue: " + foreground);
+        if (mForeground != foreground) {
+            Log.v(TAG, "setForeground() -> oldValue: " + mForeground + " newValue: " + foreground);
 
-          if(!foreground){
-
-            final NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+            final NotificationManager notificationManager
+                    = (NotificationManager) mContext.getSystemService(
+                    Context.NOTIFICATION_SERVICE);
             notificationManager.cancelAll();
 
-          }
         }
         mForeground = foreground;
 
@@ -424,7 +362,6 @@ public class NotificationService {
         mWebViewReferences.clear();
         mNotifications.clear();
     }
-
 
 
     static class WebViewReference {

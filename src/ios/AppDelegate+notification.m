@@ -82,7 +82,7 @@ static char launchNotificationKey;
 
     NSMutableDictionary* notification = [NSMutableDictionary dictionaryWithDictionary:[userInfo objectForKey:@"aps"]];
     NSMutableDictionary* payload = [NSMutableDictionary dictionaryWithDictionary:[userInfo mutableCopy]];
-    [payload removeObject: @"aps"];
+    [payload removeObjectForKey: @"aps"];
 
     [notification setObject: payload forKey:@"custom"];
     [notification setObject:[self getUUID] forKey:@"uuid"];

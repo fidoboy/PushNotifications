@@ -70,6 +70,8 @@ public class NotificationService {
     private List<WebViewReference> mWebViewReferences = new ArrayList<WebViewReference>();
 
     private String mRegistrationID = null;
+    
+    private String mRegistrationErrorId = null;
 
     private List<JSONObject> mNotifications = new ArrayList<JSONObject>();
 
@@ -184,6 +186,17 @@ public class NotificationService {
     private void notifyRegisteredToAllWebViews() {
         for (WebViewReference webViewReference : mWebViewReferences) {
             webViewReference.notifyRegistered();
+        }
+    }
+    
+    public void onRegistrationError(String errorId) {
+        mRegistrationErrorId = errorId;
+        notifyRegistrationErrorToAllWebViews();
+    }
+
+    private void notifyRegistrationErrorToAllWebViews() {
+        for (WebViewReference webViewReference : mWebViewReferences) {
+            webViewReference.notifyRegistrationError();
         }
     }
 
@@ -426,6 +439,15 @@ public class NotificationService {
                 Log.v(TAG, "No Register callback - webview: " + getWebView());
             }
         }
+        
+        public void notifyRegistrationError() {
+            Log.v(TAG,
+                  "GCM Registration Failed for webview " + getWebView());
+            if (getRegisterCallBack() != null){
+                setNotifiedOfRegistered(false);
+                getRegisterCallBack().error(mNotificationService.mRegistrationErrorId);
+            }
+        }
 
         public void sendNotification(JSONObject notification) {
             if (hasNotification(notification)) {
@@ -450,7 +472,7 @@ public class NotificationService {
                 sendNotification(getNotificationBackgroundCallBack(), notification);
             }
         }
-
+        
         private void sendNotification(CallbackContext callBack,
                 JSONObject notification) {
 

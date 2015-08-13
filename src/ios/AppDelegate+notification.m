@@ -9,8 +9,6 @@
 #import "AppDelegate+notification.h"
 #import <objc/runtime.h>
 
-static char launchNotificationKey;
-
 @implementation AppDelegate (notification)
 
 // its dangerous to override a method from within a category.
